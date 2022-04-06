@@ -1,4 +1,5 @@
 from . import conn_cur, commit_and_close
+from psycopg2 import sql
 
 
 class Animes:
@@ -50,7 +51,7 @@ class Animes:
         return all_animes
 
     @staticmethod
-    def serialize_data(payload):
+    def serialize_data(payload: dict):
         anime_columns = [
             'id',
             'anime',
@@ -59,7 +60,7 @@ class Animes:
         ]
         return dict(zip(anime_columns, payload))
 
-    def one_anime(anime_id):
+    def one_anime(anime_id: str):
         conn, cur = conn_cur()
 
         query = 'SELECT * FROM animes WHERE id = %s'
@@ -69,3 +70,34 @@ class Animes:
         commit_and_close(conn, cur)
         return animes
 
+    @staticmethod
+    def dell_anime(anime_id: str):
+        conn, cur = conn_cur()
+
+        query = 'DELETE FROM animes WHERE id = %s RETURNING *'
+        cur.execute(query, anime_id)
+        animes = cur.fetchone()
+
+        commit_and_close(conn, cur)
+        return animes
+
+    @staticmethod
+    def update_anime(anime_id: str, payload: dict):
+        conn, cur = conn_cur()
+
+        colums = [sql.Identifier(key) for key in payload.keys()]
+        values = [sql.Literal(value) for value in payload.values()]
+        sql_anime_id = sql.Literal(anime_id)
+        
+        query = sql.SQL("""
+            UPDATE animes SET ({colums}) = ROW ({values})  WHERE id = {id} RETURNING *
+        """).format(
+            id=sql_anime_id, 
+            colums=sql.SQL(",").join(colums),
+            values=sql.SQL(",").join(values),
+        )
+        
+        animes = cur.fetchone()
+
+        commit_and_close(conn, cur)
+        return animes

@@ -48,8 +48,22 @@ def found_one_anime(anime_id):
 
 
 def del_anime(anime_id):
-    ...
+    try:
+        anime = Animes.dell_anime(anime_id)
+    except (Exception):
+        return {"msg": "id nao encontrado no banco de dados"}, 404
+    
+    if not anime:
+        return {"msg": "id nao encontrado no banco de dados"}, 404
+    
+    serializer = Animes.serialize_data(anime)
+
+    return serializer, 200
 
 
 def patch_anime(anime_id):
-    ...
+    data = request.json
+    update_anime = Animes.update_anime(anime_id, data)
+    serializer = serializer = Animes.serialize_data(update_anime)
+
+    return jsonify(serializer), 200
