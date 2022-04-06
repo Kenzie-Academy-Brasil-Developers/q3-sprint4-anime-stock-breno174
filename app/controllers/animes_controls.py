@@ -2,9 +2,10 @@ from flask import request, jsonify
 from os import getenv
 from dotenv import load_dotenv
 from http import HTTPStatus
-from psycopg2.errors import UniqueViolation
+from psycopg2.errors import UniqueViolation, ProgrammingError
 
 from app.models.anime_model import Animes
+from app.services.user_service import validate_keys
 
 load_dotenv()
 
@@ -21,6 +22,9 @@ def all_animes():
 
 
 def post_anime():
+    if validate_keys():
+        return validate_keys()
+
     data = request.json
     newanime = Animes(**data)
 
@@ -62,8 +66,14 @@ def del_anime(anime_id):
 
 
 def patch_anime(anime_id):
+    if validate_keys():
+        return validate_keys()
+
     data = request.json
-    update_anime = Animes.update_anime(anime_id, data)
+    try:
+        update_anime = Animes.update_anime(anime_id, data)
+    except ProgrammingError:
+        return {"msg": "id nao encontrado no banco de dados"}, 404
     serializer = serializer = Animes.serialize_data(update_anime)
 
     return jsonify(serializer), 200
