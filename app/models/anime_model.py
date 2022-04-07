@@ -1,3 +1,4 @@
+from app.services.user_service import cash_keys
 from . import conn_cur, commit_and_close
 from psycopg2 import sql
 
@@ -85,6 +86,8 @@ class Animes:
     def update_anime(anime_id: str, payload: dict):
         conn, cur = conn_cur()
 
+        payload = cash_keys(payload)
+
         colums = [sql.Identifier(key) for key in payload.keys()]
         values = [sql.Literal(value) for value in payload.values()]
         sql_anime_id = sql.Literal(anime_id)
@@ -96,8 +99,8 @@ class Animes:
             colums=sql.SQL(",").join(colums),
             values=sql.SQL(",").join(values),
         )
-        
-        animes = cur.fetchone()
+        cur.execute(query)
+        update = cur.fetchone()
 
         commit_and_close(conn, cur)
-        return animes
+        return update

@@ -49,3 +49,9 @@ def verify_keys_decorator():
         return wrapper
 
     return receive_func
+
+def cash_keys(payload: dict):
+        for key in payload.keys():
+            if type(payload[key]) == str:
+                payload[key] = payload[key].lower().title()
+        return payload
